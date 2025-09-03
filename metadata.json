@@ -1,0 +1,5 @@
+{
+  "name": "Ficha Clínica Kinesiológica",
+  "description": "Una aplicación web estática para que los kinesiólogos recopilen datos de pacientes y generen un resumen para asistentes de IA. Creada con HTML, Tailwind CSS y JavaScript puro.",
+  "requestFramePermissions": []
+}

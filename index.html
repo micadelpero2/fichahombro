@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Clínico de Hombro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librerías para exportar archivos -->
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/html-to-docx@1.8.0/dist/html-to-docx.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Transición suave para la visibilidad del contenido de las pestañas */
+        .tab-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .tab-content.hidden {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            pointer-events: none;
+            visibility: hidden;
+        }
+        /* Asegura que el scrollbar en la navegación móvil no sea demasiado intrusivo */
+        .mobile-nav::-webkit-scrollbar {
+            height: 4px;
+        }
+        .mobile-nav::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 20px;
+        }
+        /* Estilo para los subtítulos dentro de las pestañas */
+        .section-subtitle {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #374151; /* text-gray-700 */
+            border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+            margin-top: 1.5rem; /* mt-6 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .section-subtitle:first-of-type {
+            margin-top: 0;
+        }
+        /* Estilos para la ficha generada */
+        .prose p { margin-bottom: 0.5em; }
+        .prose strong { color: #374151; }
+        .prose ul { margin-top: 0.5em; padding-left: 1.5em; }
+        .prose li { margin-bottom: 0.25em; }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-gradient-to-b from-sky-50 to-gray-50 font-sans">
+
+    <!-- VISTA DEL PANEL DE CONTROL (DASHBOARD) -->
+    <div id="dashboard-view">
+        <div class="container mx-auto max-w-5xl py-12 px-4 sm:py-16">
+            <header class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-slate-800">Asistente Clínico de Hombro</h1>
+                <p class="text-slate-600 mt-3 text-lg">Herramienta para la evaluación kinesiológica integral de la articulación del hombro</p>
+            </header>
+
+            <main>
+                <!-- Tarjetas de Acciones Principales -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-16">
+                    <!-- Nueva Evaluación -->
+                    <div id="new-evaluation-btn" class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500 hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center">
+                        <div class="bg-blue-100 rounded-full p-4 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-slate-800">Nueva Evaluación</h2>
+                        <p class="text-slate-500 mt-1 text-sm">Crear una nueva ficha de evaluación de hombro</p>
+                    </div>
+
+                    <!-- Ver Fichas -->
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center">
+                         <div class="bg-green-100 rounded-full p-4 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-slate-800">Ver Fichas</h2>
+                        <p class="text-slate-500 mt-1 text-sm">Consultar y editar fichas de evaluación existentes</p>
+                    </div>
+
+                    <!-- Pacientes -->
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center">
+                         <div class="bg-purple-100 rounded-full p-4 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.282-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.282.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        </div>
+                        <h2 class="text-xl font-semibold text-slate-800">Pacientes</h2>
+                        <p class="text-slate-500 mt-1 text-sm">Gestionar base de datos de pacientes y grupos</p>
+                    </div>
+                </div>
+
+                <!-- Sección de Características -->
+                <div class="bg-white/70 backdrop-blur-sm p-8 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-8">Características del Sistema</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-800">Anamnesis Detallada</h4>
+                            <p class="text-xs text-blue-700 mt-1">Recopilación de datos y antecedentes</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-green-800">Análisis Funcional (CIF)</h4>
+                            <p class="text-xs text-green-700 mt-1">Evaluación de actividades específicas del hombro</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-purple-800">Evaluación Física Completa</h4>
+                            <p class="text-xs text-purple-700 mt-1">Registro de movilidad y pruebas especiales</p>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-orange-800">Informes y Seguimiento</h4>
+                            <p class="text-xs text-orange-700 mt-1">Generación de fichas y gestión de sesiones</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- VISTA DE LA FICHA DE EVALUACIÓN (Oculta por defecto) -->
+    <div id="form-view" class="hidden">
+        <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+            <header class="relative text-center mb-8">
+                 <button id="back-to-dashboard-btn" class="absolute left-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2 p-2 rounded-md hover:bg-blue-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    <span>Volver</span>
+                </button>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Ficha Clínica Kinesiológica</h1>
+                    <p class="text-gray-600 mt-2">Basado en la ficha de evaluación de hombro del Hospital Prof. Dr. Bernardo Houssay.</p>
+                </div>
+            </header>
+
+            <div class="md:flex md:gap-8">
+                <!-- Barra Lateral de Navegación (Visible en Escritorio) -->
+                <aside class="hidden md:block md:w-56 lg:w-64 flex-shrink-0">
+                    <h2 class="px-3 text-xs font-semibold uppercase text-gray-500 tracking-wider mb-2">Secciones</h2>
+                    <nav id="desktop-nav" class="flex flex-col space-y-1" aria-label="Tabs">
+                        <button class="tab-btn w-full text-left px-3 py-2 rounded-md text-sm font-medium" data-target="datos-anamnesis">Datos y Anamnesis</button>
+                        <button class="tab-btn w-full text-left px-3 py-2 rounded-md text-sm font-medium" data-target="factores-riesgo">Factores de Riesgo</button>
+                        <button class="tab-btn w-full text-left px-3 py-2 rounded-md text-sm font-medium" data-target="analisis-funcional">Análisis Funcional (CIF)</button>
+                        <button class="tab-btn w-full text-left px-3 py-2 rounded-md text-sm font-medium" data-target="evaluacion-fisica">Evaluación Física</button>
+                        <button class="tab-btn w-full text-left px-3 py-2 rounded-md text-sm font-medium" data-target="observaciones">Observaciones</button>
+                        <button class="tab-btn w-full text-left px-3 py-2 rounded-md text-sm font-medium" data-target="conclusion">Conclusión</button>
+                    </nav>
+                </aside>
+
+                <!-- Contenido Principal -->
+                <div class="flex-grow">
+                    <!-- Navegación por Pestañas (Visible en Móvil) -->
+                    <div class="md:hidden mb-4">
+                         <nav id="mobile-nav" class="mobile-nav flex overflow-x-auto border-b border-gray-200" aria-label="Tabs">
+                            <button class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 text-sm font-medium" data-target="datos-anamnesis">Anamnesis</button>
+                            <button class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 text-sm font-medium" data-target="factores-riesgo">Factores Riesgo</button>
+                            <button class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 text-sm font-medium" data-target="analisis-funcional">Análisis CIF</button>
+                            <button class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 text-sm font-medium" data-target="evaluacion-fisica">Evaluación</button>
+                            <button class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 text-sm font-medium" data-target="observaciones">Observaciones</button>
+                            <button class="tab-btn whitespace-nowrap py-3 px-4 border-b-2 text-sm font-medium" data-target="conclusion">Conclusión</button>
+                        </nav>
+                    </div>
+                    
+                    <main class="bg-white rounded-lg shadow-md p-6">
+                        <form id="kine-form">
+                            <div id="tab-content-container">
+                                 <!-- 1. Datos y Anamnesis -->
+                                <div id="datos-anamnesis" class="tab-content space-y-4">
+                                    <h3 class="section-subtitle">A. Datos Personales y Antecedentes</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                            <input type="text" id="nombre" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="edad" class="block text-sm font-medium text-gray-700">Edad</label>
+                                            <input type="number" id="edad" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                         <div>
+                                            <label for="nacionalidad" class="block text-sm font-medium text-gray-700">Nacionalidad</label>
+                                            <input type="text" id="nacionalidad" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="estadoCivil" class="block text-sm font-medium text-gray-700">Estado Civil</label>
+                                            <input type="text" id="estadoCivil" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="obraSocial" class="block text-sm font-medium text-gray-700">Obra Social</label>
+                                            <input type="text" id="obraSocial" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                                            <input type="tel" id="telefono" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="domicilio" class="block text-sm font-medium text-gray-700">Domicilio</label>
+                                        <input type="text" id="domicilio" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="actividades" class="block text-sm font-medium text-gray-700">Actividades Previas y Actuales (Laborales y Deportivas)</label>
+                                        <textarea id="actividades" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="antMedicosQuirurgicos" class="block text-sm font-medium text-gray-700">Antecedentes Médicos y Quirúrgicos</label>
+                                        <textarea id="antMedicosQuirurgicos" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="medicacion" class="block text-sm font-medium text-gray-700">Medicación Actual y para el Dolor</label>
+                                        <textarea id="medicacion" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                    
+                                    <h3 class="section-subtitle">B. Historia del Episodio</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="fechaCausaLesion" class="block text-sm font-medium text-gray-700">Fecha y Causa de la Lesión</label>
+                                            <input type="text" id="fechaCausaLesion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="primerAtencion" class="block text-sm font-medium text-gray-700">Primera Atención Médica (Fecha y Lugar)</label>
+                                            <input type="text" id="primerAtencion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="mecanismoProduccion" class="block text-sm font-medium text-gray-700">Mecanismo de Producción (traumático, quirúrgico, crónico)</label>
+                                        <input type="text" id="mecanismoProduccion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="estudiosComplementarios" class="block text-sm font-medium text-gray-700">Estudios Complementarios (RX, TAC, RMN)</label>
+                                        <input type="text" id="estudiosComplementarios" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="cirugiasPrevias" class="block text-sm font-medium text-gray-700">Detalles de Cirugías Previas, Osteosíntesis e Inmovilizaciones</label>
+                                        <textarea id="cirugiasPrevias" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                     <div>
+                                        <label for="lateralidad" class="block text-sm font-medium text-gray-700">Lateralidad Dominante</label>
+                                        <select id="lateralidad" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                            <option>Diestro/a</option>
+                                            <option>Zurdo/a</option>
+                                            <option>Ambidiestro/a</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Factores de Riesgo -->
+                                <div id="factores-riesgo" class="tab-content hidden space-y-4">
+                                    <h3 class="section-subtitle">C. Factores de Riesgo de Caída y Comorbilidades</h3>
+                                    <div>
+                                        <label for="menopausiaOsteoporosis" class="block text-sm font-medium text-gray-700">Menopausia, Osteopenia/Osteoporosis, Densitometría Ósea</label>
+                                        <textarea id="menopausiaOsteoporosis" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="caidas" class="block text-sm font-medium text-gray-700">Caídas en los últimos 6 meses</label>
+                                            <input type="text" id="caidas" placeholder="Nro. y descripción" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="tug" class="block text-sm font-medium text-gray-700">Test "Get Up and Go" (TUG)</label>
+                                            <input type="text" id="tug" placeholder="Resultado en segundos" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="tabaquismoAlcoholismo" class="block text-sm font-medium text-gray-700">Tabaquismo, Alcoholismo, Medicación Depresora del SNC</label>
+                                        <textarea id="tabaquismoAlcoholismo" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                     <div>
+                                        <label for="enfermedadesAsociadas" class="block text-sm font-medium text-gray-700">Enfermedades Asociadas (Neurológicas, Vasculares, Metabólicas, Tumorales)</label>
+                                        <textarea id="enfermedadesAsociadas" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- 3. Análisis Funcional (CIF) -->
+                                <div id="analisis-funcional" class="tab-content hidden space-y-4">
+                                    <h3 class="section-subtitle">Análisis Funcional del Hombro (CIF)</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Evalúa el impacto en las actividades diarias relacionadas con el hombro.</p>
+                                    
+                                    <h4 class="font-semibold text-gray-700">Actividades y Participación (d) - Limitaciones en AVD</h4>
+                                    <div class="space-y-4">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-peinarse" class="text-sm font-medium text-gray-700">Peinarse o lavarse el pelo</label>
+                                            <select id="cif-d-peinarse" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-lavarse-espalda" class="text-sm font-medium text-gray-700">Lavarse la espalda</label>
+                                            <select id="cif-d-lavarse-espalda" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-alcanzar-alto" class="text-sm font-medium text-gray-700">Alcanzar un objeto en un estante alto</label>
+                                            <select id="cif-d-alcanzar-alto" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-abrocharse" class="text-sm font-medium text-gray-700">Abrocharse por la espalda</label>
+                                            <select id="cif-d-abrocharse" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-chaqueta" class="text-sm font-medium text-gray-700">Ponerse una chaqueta o abrigo</label>
+                                            <select id="cif-d-chaqueta" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-llevar-peso" class="text-sm font-medium text-gray-700">Llevar un objeto pesado (ej. bolsa)</label>
+                                            <select id="cif-d-llevar-peso" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 items-center">
+                                            <label for="cif-d-dormir" class="text-sm font-medium text-gray-700">Dormir sobre el lado afectado</label>
+                                            <select id="cif-d-dormir" class="mt-1 sm:mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option>Sin Dificultad</option><option>Leve</option><option>Moderada</option><option>Severa</option><option>Imposible</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <label for="cif-d-actividades-especificas" class="block text-sm font-medium text-gray-700">Otras actividades específicas limitadas (laboral, deporte)</label>
+                                        <textarea id="cif-d-actividades-especificas" rows="3" placeholder="Detallar la actividad y la limitación..." class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+
+                                    <h4 class="font-semibold text-gray-700 mt-6">Factores Contextuales</h4>
+                                    <div>
+                                        <label for="cif-ambientales" class="block text-sm font-medium text-gray-700">Factores Ambientales (e)</label>
+                                        <textarea id="cif-ambientales" rows="3" placeholder="Ej: e310 Apoyo familiar, e580 Barreras en el lugar de trabajo, e115 Ausencia de ayudas técnicas." class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                     <div>
+                                        <label for="cif-personales" class="block text-sm font-medium text-gray-700">Factores Personales</label>
+                                        <textarea id="cif-personales" rows="3" placeholder="Ej: Creencias sobre el dolor, estrategias de afrontamiento, nivel de actividad física previo, objetivos del paciente." class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Evaluación Física -->
+                                <div id="evaluacion-fisica" class="tab-content hidden">
+                                    <h3 class="section-subtitle">Asistente IA Kinesiológico</h3>
+                                    <div id="chatbot-section">
+                                         <div id="chatbot-window" class="w-full h-[60vh] max-h-[500px] bg-white rounded-lg shadow-lg flex flex-col border">
+                                            <header class="flex items-center justify-between p-3 bg-gray-100 text-gray-800 rounded-t-lg border-b">
+                                                <h3 class="text-base font-semibold">Consulta al Asistente</h3>
+                                            </header>
+                                            <div class="flex-grow p-1 bg-gray-50 rounded-b-lg">
+                                                <iframe
+                                                    src="https://udify.app/chat/A7x81kyqIOyqBjc4"
+                                                    class="w-full h-full border-0 rounded-b-md"
+                                                    title="Chatbot Kinesiológico">
+                                                </iframe>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 5. Observaciones -->
+                                <div id="observaciones" class="tab-content hidden space-y-4">
+                                    <h3 class="section-subtitle">G. Observaciones</h3>
+                                    <div>
+                                        <label for="observacionesGenerales" class="block text-sm font-medium text-gray-700">Observaciones Generales</label>
+                                        <textarea id="observacionesGenerales" rows="10" placeholder="Anotar aquí cualquier observación relevante de la sesión, plan de tratamiento inicial, o comentarios adicionales..." class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- 6. Conclusión -->
+                                <div id="conclusion" class="tab-content hidden space-y-4">
+                                    <h3 class="section-subtitle">I. Documentos y Ficha Final</h3>
+                                     <div>
+                                        <label for="documento-adjunto" class="block text-sm font-medium text-gray-700 mb-2">Adjuntar Documento (Opcional)</label>
+                                        <input type="file" id="documento-adjunto" accept=".doc,.docx,.pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                    </div>
+
+                                    <div id="summary-section" class="mt-6 pt-6 border-t border-gray-200">
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Ficha de Cierre</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Genera una ficha visual con todos los datos recolectados. Cada ficha generada se guarda automáticamente.</p>
+                                        <div class="flex items-center space-x-4 mb-4">
+                                            <button id="generate-final-ficha-btn" type="button" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                Generar y Guardar Ficha
+                                            </button>
+                                        </div>
+                                        <div id="download-options" class="hidden flex flex-col sm:flex-row gap-3">
+                                            <button id="download-pdf-btn" type="button" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3v-2a1 1 0 00-1-1H7a1 1 0 00-1 1v2H3a1 1 0 110-2V4zm2 1a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1H6z" clip-rule="evenodd" /></svg>
+                                                Descargar PDF
+                                            </button>
+                                            <button id="download-docx-btn" type="button" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
+                                                Descargar DOCX
+                                            </button>
+                                            <button id="download-xlsx-btn" type="button" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" /><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" /></svg>
+                                                Descargar XLSX
+                                            </button>
+                                        </div>
+                                        <!-- Contenedor para la ficha visual -->
+                                        <div id="ficha-display-container" class="mt-4 hidden"></div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </form>
+                    </main>
+                </div>
+            </div>
+
+            <footer class="text-center mt-8 text-sm text-gray-500">
+                <p>&copy; 2024 Ficha Clínica Kinesiológica. Herramienta de apoyo profesional.</p>
+            </footer>
+        </div>
+    </div>
+    
+    <script type="module" src="index.tsx"></script>
+
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
