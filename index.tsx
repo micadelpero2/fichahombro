@@ -1,3 +1,6 @@
+// @ts-ignore
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
 // Declara las variables globales de las librerías para que TypeScript no se queje
 declare var jsPDF: any;
 declare var htmlToDocx: any;

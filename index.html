@@ -10,6 +10,16 @@
     <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/html-to-docx@1.8.0/dist/html-to-docx.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- Gemini API -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai"
+      }
+    }
+    </script>
+    
     <style>
         /* Transición suave para la visibilidad del contenido de las pestañas */
         .tab-content {
@@ -49,7 +59,6 @@
         .prose ul { margin-top: 0.5em; padding-left: 1.5em; }
         .prose li { margin-bottom: 0.25em; }
     </style>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-gray-50 font-sans">
 
@@ -74,7 +83,7 @@
                     </div>
 
                     <!-- Ver Fichas -->
-                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center">
+                    <div id="view-records-btn" class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-xl transition-shadow cursor-pointer flex flex-col items-center text-center">
                          <div class="bg-green-100 rounded-full p-4 mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                         </div>
@@ -117,8 +126,28 @@
             </main>
         </div>
     </div>
+    
+    <!-- VISTA DE FICHAS GUARDADAS -->
+    <div id="records-view" class="hidden">
+        <div class="container mx-auto max-w-4xl py-12 px-4 sm:py-16">
+            <header class="relative text-center mb-12">
+                 <button id="back-to-dashboard-btn-from-records" class="absolute left-0 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-2 p-2 rounded-md hover:bg-blue-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    <span>Volver</span>
+                </button>
+                <h1 class="text-4xl font-bold text-slate-800">Fichas de Pacientes Guardadas</h1>
+                <p class="text-slate-600 mt-3 text-lg">Selecciona una ficha para ver o editar sus detalles.</p>
+            </header>
+            <main>
+                <div id="patient-list-container" class="space-y-4">
+                    <!-- Las fichas de los pacientes se insertarán aquí dinámicamente -->
+                </div>
+            </main>
+        </div>
+    </div>
 
-    <!-- VISTA DE LA FICHA DE EVALUACIÓN (Oculta por defecto) -->
+
+    <!-- VISTA DE LA FICHA DE EVALUACIÓN -->
     <div id="form-view" class="hidden">
         <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
             <header class="relative text-center mb-8">
@@ -333,6 +362,16 @@
                                         <label for="cif-personales" class="block text-sm font-medium text-gray-700">Factores Personales</label>
                                         <textarea id="cif-personales" rows="3" placeholder="Ej: Creencias sobre el dolor, estrategias de afrontamiento, nivel de actividad física previo, objetivos del paciente." class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
                                     </div>
+                                    
+                                    <!-- Botón de descarga de PDF parcial -->
+                                    <div class="mt-6 pt-6 border-t border-gray-200">
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Continuar con la Evaluación</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Descarga un resumen en PDF con la información recopilada hasta ahora para utilizarlo como referencia en la sección de "Evaluación Física" con el asistente IA.</p>
+                                        <button id="download-partial-pdf-btn" type="button" class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3v-2a1 1 0 00-1-1H7a1 1 0 00-1 1v2H3a1 1 0 110-2V4zm2 1a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1H6z" clip-rule="evenodd"></path></svg>
+                                            Descargar Resumen Parcial (PDF)
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- 4. Evaluación Física -->
@@ -372,13 +411,21 @@
                                     </div>
 
                                     <div id="summary-section" class="mt-6 pt-6 border-t border-gray-200">
-                                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Ficha de Cierre</h4>
-                                        <p class="text-sm text-gray-600 mb-4">Genera una ficha visual con todos los datos recolectados. Cada ficha generada se guarda automáticamente.</p>
+                                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Ficha de Cierre y Resumen IA</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Genera un resumen clínico con IA y guarda la ficha. Cada ficha generada se guarda automáticamente para consulta futura.</p>
                                         <div class="flex items-center space-x-4 mb-4">
                                             <button id="generate-final-ficha-btn" type="button" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                                Generar y Guardar Ficha
+                                                Generar Resumen y Guardar
                                             </button>
                                         </div>
+                                         <div id="ai-summary-loader" class="hidden my-4 flex items-center justify-center space-x-2 text-gray-600">
+                                            <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Generando resumen clínico con IA...</span>
+                                        </div>
+
                                         <div id="download-options" class="hidden flex flex-col sm:flex-row gap-3">
                                             <button id="download-pdf-btn" type="button" class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3v-2a1 1 0 00-1-1H7a1 1 0 00-1 1v2H3a1 1 0 110-2V4zm2 1a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1H6z" clip-rule="evenodd" /></svg>
@@ -393,8 +440,8 @@
                                                 Descargar XLSX
                                             </button>
                                         </div>
-                                        <!-- Contenedor para la ficha visual -->
-                                        <div id="ficha-display-container" class="mt-4 hidden"></div>
+                                        <!-- Contenedor para la ficha visual y el resumen IA -->
+                                        <div id="ficha-display-container" class="mt-4 hidden prose prose-sm max-w-none text-gray-700"></div>
                                     </div>
                                     
                                 </div>
@@ -412,6 +459,5 @@
     
     <script type="module" src="index.tsx"></script>
 
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
